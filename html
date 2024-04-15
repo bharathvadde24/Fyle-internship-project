@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Calculator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+        }
+
+        .tooltip-icon {
+            cursor: pointer;
+        }
+
+        .error-icon {
+            color: red;
+            display: none;
+        }
+
+        .error-message {
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="form-heading">Tax Calculator</h1>
+        <form id="taxForm">
+            <div class="form-group">
+                <label for="grossIncome">Enter Gross Annual Income</label>
+                <span class="tooltip-icon" data-tooltip="Enter Gross Annual Income is your total salary in a year before any deductions">?</span>
+                <input type="text" class="form-control" id="grossIncome" placeholder="Enter Gross Annual Income" required>
+                <span class="error-icon">!</span>
+                <span class="error-message">Please enter numbers only</span>
+            </div>
+            <div class="form-group">
+                <label for="extraIncome">Enter Extra Income</label>
+                <span class="tooltip-icon" data-tooltip="Enter Extra Income from other sources">?</span>
+                <input type="text" class="form-control" id="extraIncome" placeholder="Enter Extra Income from other sources" required>
+                <span class="error-icon">!</span>
+                <span class="error-message">Please enter numbers only</span>
+            </div>
+            <div class="form-group">
+                <label for="age">Age Group</label>
+                <select class="form-control" id="age" required>
+                    <option value="" selected disabled>Select Age Group</option>
+                    <option value="<40">&lt; 40</option>
+                    <option value=">=40 & <60">&ge; 40 &lt; 60</option>
+                    <option value=">=60">&ge; 60</option>
+                </select>
+                <span class="error-icon">!</span>
+                <span class="error-message">Please select an age group</span>
+            </div>
+            <div class="form-group">
+                <label for="deductions">Enter Total Applicable Deductions</label>
+                <span class="tooltip-icon" data-tooltip="Add Total Applicable Deductions">?</span>
+                <input type="text" class="form-control" id="deductions" placeholder="Add Total Applicable Deductions" required>
+                <span class="error-icon">!</span>
+                <span class="error-message">Please enter numbers only</span>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <!-- Modal Final Output -->
+        <div class="modal fade" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="resultModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="resultModalLabel">Tax Calculation Result</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="modalBody">
+                        <!-- Tax calculation result will be displayed here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>  -->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Function to validate input fields
+            function validateInput() {
+                var isValid = true;
+                var inputs = document.querySelectorAll('#taxForm input[type="text"]');
+                inputs.forEach(function(input) {
+                    var inputValue = input.value.trim();
+                    var errorIcon = input.nextElementSibling;
+                    var errorMessage = errorIcon.nextElementSibling;
+                    if (inputValue === '') {
+                        errorIcon.style.display = 'inline-block';
+                        errorMessage.textContent = 'Required*';
+                        errorMessage.style.display = 'inline-block';
+                        isValid = false;
+                    } else if (!/^\d+$/.test(inputValue)) {
+                        errorIcon.style.display = 'inline-block';
+                        errorMessage.textContent = 'Please enter numbers only';
+                        errorMessage.style.display = 'inline-block';
+                        isValid = false;
+                    } else {
+                        errorIcon.style.display = 'none';
+                        errorMessage.style.display = 'none';
+                    }
+                });
+                return isValid;
+            }
+
+            // Function to calculate tax and display result
+            var taxForm = document.getElementById("taxForm");
+            taxForm.addEventListener("submit", function(event) {
+                event.preventDefault();
+                if (validateInput()) {
+                    var grossIncome = parseFloat(document.getElementById("grossIncome").value);
+                    var extraIncome = parseFloat(document.getElementById("extraIncome").value);
+                    var age = document.getElementById("age").value;
+                    var deductions = parseFloat(document.getElementById("deductions").value);
+
+                    // Calculate tax based on provided formula
+                    var tax = 0;
+                    var overallIncome = grossIncome + extraIncome - deductions;
+                    if (overallIncome > 800000) {
+                        if (age === "<40") {
+                            tax = 0.3 * (overallIncome - 800000);
+                        } else if (age === ">=40 & <60") {
+                            tax = 0.4 * (overallIncome - 800000);
+                        } else if (age === ">=60") {
+                            tax = 0.1 * (overallIncome - 800000);
+                        }
+                    }
+
+                    // Getting a reference to the modal body element
+                    var modalBody = document.getElementById("modalBody");
+
+                    // Creating a paragraph element to display the tax calculation result
+                    var paragraph = document.createElement("p");
+                    paragraph.textContent = 'Your calculated tax is: ' + tax.toFixed(2) + ' Lakhs';
+
+                    // Clearing any existing content inside the modal body
+                    modalBody.innerHTML = '';
+
+                    // Appending the paragraph element to the modal body
+                    modalBody.appendChild(paragraph);
+
+                    // Getting a reference to the modal element
+                    var resultModal = document.getElementById("resultModal");
+
+                    // Showing the modal by adding the 'show' class to it
+                    resultModal.classList.add("show");
+
+                    // Setting the 'aria-hidden' attribute to 'false' to make the modal accessible
+                    resultModal.setAttribute("aria-hidden", "false");
+
+                    // Setting the 'style' attribute to 'display: block' to make the modal visible
+                    resultModal.style.display = "block";
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
